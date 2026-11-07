@@ -1,1 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>實用記帳程式</title>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 500px;
+            margin: 20px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #006633;
+            margin-top: 0;
+        }
+        .balance-board {
+            display: flex;
+            justify-content: space-between;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+        }
+        .balance-item {
+            text-align: center;
+            width: 33%;
+        }
+        .balance-item h3 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: normal;
+            color: #666;
+        }
+        .balance-item p {
+            margin: 5px 0 0;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .text-green { color: #28a745 !important; }
+        .text-red { color: #dc3545 !important; }
+        
+        .form-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .form-group > div {
+            flex: 1;
+            min-width: 120px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button.add-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #006633;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        button.add-btn:hover {
+            background-color: #004d26;
+        }
+        
+        ul.record-list {
+            list-style: none;
+            padding: 0;
+            margin: 25px 0 0;
+        }
+        li.record-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            background: #fff;
+        }
+        li.record-item:last-child {
+            border-bottom: none;
+        }
+        .record-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .record-date {
+            font-size: 12px;
+            color: #888;
+        }
+        .record-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-top: 3px;
+        }
+        .record-amount.income { color: #28a745; font-weight: bold; }
+        .record-amount.expense { color: #dc3545; font-weight: bold; }
+        button.delete-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 15px;
+        }
+        button.delete-btn:hover {
+            background-color: #c82333;
+        }
+        .empty-msg {
+            text-align: center;
+            color: #888;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
 
+    <div class="container">
+        <h1>實用記帳本</h1>
+        
+        <div class="balance-board">
+            <div class="balance-item">
+                <h3>總收入</h3>
+                <p id="total-income" class="text-green">$0</p>
+            </div>
+            <div class="balance-item">
+                <h3>總支出</h3>
+                <p id="total-expense" class="text-red">$0</p>
+            </div>
+            <div class="balance-item">
+                <h3>本月結餘</h3>
+                <p id="total-balance">$0</p>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div>
+                <label for="type">類型</label>
+                <select id="type">
+                    <option value="expense">支出</option>
+                    <option value="income">收入</option>
+                </select>
+            </div>
+            <div>
+                <label for="date">日期</label>
+                <input type="date" id="date">
+            </div>
+        </div>
+        <div class="form-group">
+            <div>
+                <label for="title">項目名稱</label>
+                <input type="text" id="title" placeholder="例如：午餐、薪資">
+            </div>
+            <div>
+                <label for="amount">金額</label>
+                <input type="number" id="amount" placeholder="請輸入金額" min="1">
+            </div>
+        </div>
+        <button class="add-btn" onclick="addRecord()">新增紀錄</button>
+
+        <ul class="record-list" id="record-list">
+            <!-- 紀錄列表將透過 JavaScript 動態產生 -->
+        </ul>
+        <div id="empty-msg" class="empty-msg" style="display: none;">目前尚無任何記帳紀錄。</div>
+    </div>
+
+    <script>
+        // 從瀏覽器的 LocalStorage 讀取紀錄，若無則初始化為空陣列
+        let records = JSON.parse(localStorage.getItem('myAccountingRecords')) || [];
+
+        // 將預設日期設定為今天
+        document.getElementById('date').valueAsDate = new Date();
+
+        // 更新介面與計算總和
+        function updateUI() {
+            const list = document.getElementById('record-list');
+            const emptyMsg = document.getElementById('empty-msg');
+            list.innerHTML = '';
+            
+            let totalIncome = 0;
+            let totalExpense = 0;
+
+            if (records.length === 0) {
+                emptyMsg.style.display = 'block';
+            } else {
+                emptyMsg.style.display = 'none';
+                
+                // 依日期排序 (新到舊)
+                records.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                records.forEach((record, index) => {
+                    if (record.type === 'income') {
+                        totalIncome += record.amount;
+                    } else {
+                        totalExpense += record.amount;
+                    }
+
+                    const li = document.createElement('li');
+                    li.className = 'record-item';
+                    
+                    const amountClass = record.type === 'income' ? 'income' : 'expense';
+                    const sign = record.type === 'income' ? '+' : '-';
+
+                    li.innerHTML = `
+                        <div class="record-info">
+                            <span class="record-date">${record.date}</span>
+                            <span class="record-title">${record.title}</span>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            <span class="record-amount ${amountClass}">${sign}$${record.amount}</span>
+                            <button class="delete-btn" onclick="deleteRecord(${index})">刪除</button>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+            }
+
+            // 更新儀表板數字
+            document.getElementById('total-income').textContent = '$' + totalIncome;
+            document.getElementById('total-expense').textContent = '$' + totalExpense;
+            
+            const balance = totalIncome - totalExpense;
+            const balanceEl = document.getElementById('total-balance');
+            balanceEl.textContent = '$' + balance;
+            
+            if (balance > 0) {
+                balanceEl.className = 'text-green';
+            } else if (balance < 0) {
+                balanceEl.className = 'text-red';
+            } else {
+                balanceEl.className = '';
+            }
+        }
+
+        // 新增紀錄
+        function addRecord() {
+            const type = document.getElementById('type').value;
+            const date = document.getElementById('date').value;
+            const title = document.getElementById('title').value.trim();
+            const amount = parseInt(document.getElementById('amount').value);
+
+            if (!date || !title || isNaN(amount) || amount <= 0) {
+                alert('請填寫完整的項目名稱，且金額必須大於 0');
+                return;
+            }
+
+            const record = {
+                type: type,
+                date: date,
+                title: title,
+                amount: amount
+            };
+
+            // 加入陣列並存入 LocalStorage
+            records.push(record);
+            localStorage.setItem('myAccountingRecords', JSON.stringify(records));
+            
+            // 清空輸入框
+            document.getElementById('title').value = '';
+            document.getElementById('amount').value = '';
+            
+            updateUI();
+        }
+
+        // 刪除紀錄
+        function deleteRecord(index) {
+            if (confirm('確定要刪除這筆紀錄嗎？')) {
+                records.splice(index, 1);
+                localStorage.setItem('myAccountingRecords', JSON.stringify(records));
+                updateUI();
+            }
+        }
+
+        // 頁面載入時執行一次更新
+        updateUI();
+    </script>
+</body>
+</html>
