@@ -1,1 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雲端即時 Markdown 編輯器</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+        }
+        header {
+            background-color: #252526;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 20px;
+            color: #007acc;
+        }
+        .btn-clear {
+            background-color: #c53030;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-clear:hover {
+            background-color: #9b2c2c;
+        }
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        .editor-pane, .preview-pane {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .editor-pane {
+            border-right: 1px solid #333;
+            background-color: #1e1e1e;
+        }
+        textarea {
+            width: 100%;
+            height: 100%;
+            background-color: transparent;
+            color: #d4d4d4;
+            border: none;
+            resize: none;
+            font-size: 16px;
+            font-family: monospace;
+            outline: none;
+        }
+        .preview-pane {
+            background-color: #ffffff;
+            color: #333333;
+        }
+        .preview-pane h1, .preview-pane h2, .preview-pane h3 {
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: 0.3em;
+        }
+        .preview-pane code {
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .preview-pane pre {
+            background-color: #f6f8fa;
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        .preview-pane pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .preview-pane blockquote {
+            padding: 0 1em;
+            color: #6a737d;
+            border-left: 0.25em solid #dfe2e5;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
 
+    <header>
+        <h1>即時 Markdown 編輯器</h1>
+        <button class="btn-clear" onclick="clearEditor()">清空草稿</button>
+    </header>
+
+    <div class="container">
+        <div class="editor-pane">
+            <textarea id="editor" placeholder="在此輸入 Markdown 語法..."></textarea>
+        </div>
+        <div class="preview-pane" id="preview">
+            <!-- 轉換後的 HTML 會顯示在這裡 -->
+        </div>
+    </div>
+
+    <script>
+        const editor = document.getElementById('editor');
+        const preview = document.getElementById('preview');
+        const STORAGE_KEY = 'cloudMarkdownDraft';
+
+        function updatePreview() {
+            const markdownText = editor.value;
+            preview.innerHTML = marked.parse(markdownText);
+            localStorage.setItem(STORAGE_KEY, markdownText);
+        }
+
+        function clearEditor() {
+            if (confirm('確定要清空所有內容嗎？這將無法復原。')) {
+                editor.value = '';
+                updatePreview();
+            }
+        }
+
+        function loadDraft() {
+            const savedDraft = localStorage.getItem(STORAGE_KEY);
+            if (savedDraft) {
+                editor.value = savedDraft;
+            } else {
+                editor.value = '# 歡迎使用 Markdown 編輯器\n\n這是一個支援 **即時預覽** 的編輯器。\n\n## 功能介紹\n- 支援標準 Markdown 語法\n- 內容會自動存檔至瀏覽器\n- 左右分割畫面，即時比對\n\n```javascript\n// 這裡可以寫程式碼\nconsole.log("Hello Cloudflare!");\n```';
+            }
+            updatePreview();
+        }
+
+        editor.addEventListener('input', updatePreview);
+        window.addEventListener('DOMContentLoaded', loadDraft);
+    </script>
+</body>
+</html>
