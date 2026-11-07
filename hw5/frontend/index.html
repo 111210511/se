@@ -1,1 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Docker 微服務系統</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f7f6; padding: 20px; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1 { color: #006633; text-align: center; }
+        .form-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px 15px; background: #006633; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        ul { list-style: none; padding: 0; }
+        li { padding: 10px; border-bottom: 1px solid #eee; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>微服務留言板</h1>
+        <div class="form-group">
+            <input type="text" id="msgInput" placeholder="請輸入訊息...">
+            <button onclick="sendData()">送出</button>
+        </div>
+        <ul id="dataList"></ul>
+    </div>
 
+    <script>
+        async function loadData() {
+            try {
+                const res = await fetch('/api/data');
+                const data = await res.json();
+                const list = document.getElementById('dataList');
+                list.innerHTML = '';
+                data.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = item.content;
+                    list.appendChild(li);
+                });
+            } catch (err) {
+                console.error('讀取失敗:', err);
+            }
+        }
+
+        async function sendData() {
+            const input = document.getElementById('msgInput');
+            if (!input.value.trim()) return;
+            
+            try {
+                await fetch('/api/data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: input.value })
+                });
+                input.value = '';
+                loadData();
+            } catch (err) {
+                console.error('送出失敗:', err);
+            }
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
