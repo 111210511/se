@@ -1,1 +1,62 @@
+import argparse
+import urllib.request
+import urllib.parse
+import urllib.error
+import sys
 
+def parse_headers(header_list):
+    headers = {}
+    if header_list:
+        for h in header_list:
+            parts = h.split(':', 1)
+            if len(parts) == 2:
+                headers[parts[0].strip()] = parts[1].strip()
+    return headers
+
+def main():
+    parser = argparse.ArgumentParser(description="簡單的類 curl 命令列工具")
+    parser.add_argument("url", help="要請求的 URL")
+    parser.add_argument("-X", "--request", help="指定使用的請求方法 (例如 GET, POST, PUT, DELETE)", default=None)
+    parser.add_argument("-d", "--data", help="HTTP POST 的資料", default=None)
+    parser.add_argument("-H", "--header", help="傳遞自訂標頭給伺服器", action="append")
+    parser.add_argument("-o", "--output", help="將輸出寫入檔案而非終端機", default=None)
+    
+    args = parser.parse_args()
+
+    method = args.request
+    if args.data is not None and method is None:
+        method = "POST"
+    elif method is None:
+        method = "GET"
+
+    headers = parse_headers(args.header)
+    
+    data = None
+    if args.data is not None:
+        data = args.data.encode('utf-8')
+
+    req = urllib.request.Request(args.url, data=data, headers=headers, method=method)
+
+    try:
+        with urllib.request.urlopen(req) as response:
+            body = response.read()
+            
+            if args.output:
+                with open(args.output, 'wb') as f:
+                    f.write(body)
+                print(f"已下載 {len(body)} 位元組至 {args.output}")
+            else:
+                try:
+                    print(body.decode('utf-8'))
+                except UnicodeDecodeError:
+                    sys.stdout.buffer.write(body)
+                    
+    except urllib.error.URLError as e:
+        print(f"請求發生錯誤: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"發生未預期的錯誤: {e}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
