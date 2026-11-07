@@ -1,1 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>測試範例應用</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .form-group { margin-bottom: 10px; }
+        label { display: inline-block; width: 100px; }
+        button { padding: 5px 15px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>購物車總金額計算</h1>
+    <div class="form-group">
+        <label for="price1">商品 1 價格:</label>
+        <input type="number" id="price1" value="0">
+    </div>
+    <div class="form-group">
+        <label for="price2">商品 2 價格:</label>
+        <input type="number" id="price2" value="0">
+    </div>
+    <button id="calcBtn" onclick="calculate()">計算總和</button>
+    <h2>總計: <span id="result">0</span></h2>
 
+    <script>
+        async function calculate() {
+            const price1 = parseInt(document.getElementById('price1').value) || 0;
+            const price2 = parseInt(document.getElementById('price2').value) || 0;
+            
+            try {
+                const response = await fetch('/api/calculate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        items: [{ price: price1 }, { price: price2 }] 
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('result').innerText = data.total;
+            } catch (error) {
+                document.getElementById('result').innerText = '計算失敗';
+            }
+        }
+    </script>
+</body>
+</html>
