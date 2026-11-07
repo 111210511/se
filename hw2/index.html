@@ -1,1 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>國立金門大學 校務系統 (模擬)</title>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+        header {
+            background-color: #006633;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .logout-btn {
+            background-color: #cc0000;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: none;
+        }
+        .logout-btn:hover {
+            background-color: #990000;
+        }
+        
+        /* 登入介面 */
+        #login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        #login-container h2 {
+            color: #006633;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #006633;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .login-btn:hover {
+            background-color: #004d26;
+        }
+        .error-msg {
+            color: red;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
 
+        /* 儀表板介面 */
+        #dashboard-container {
+            display: none;
+            max-width: 1000px;
+            margin: 30px auto;
+            display: flex;
+            gap: 20px;
+        }
+        .sidebar {
+            width: 250px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .sidebar-menu li {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            color: #555;
+        }
+        .sidebar-menu li:hover, .sidebar-menu li.active {
+            background-color: #e6f2eb;
+            color: #006633;
+            font-weight: bold;
+        }
+        .main-content {
+            flex-grow: 1;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+        }
+        th {
+            background-color: #006633;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>國立金門大學 校務系統</h1>
+        <button id="logoutBtn" class="logout-btn" onclick="logout()">登出</button>
+    </header>
+
+    <!-- 登入區塊 -->
+    <div id="login-container">
+        <h2>學生登入</h2>
+        <div class="form-group">
+            <label for="studentId">學號 / 帳號</label>
+            <input type="text" id="studentId" placeholder="請輸入學號 (例如: 111210511)">
+        </div>
+        <div class="form-group">
+            <label for="password">密碼</label>
+            <input type="password" id="password" placeholder="請輸入密碼">
+        </div>
+        <button class="login-btn" onclick="login()">登入</button>
+        <div id="loginError" class="error-msg">帳號或密碼不能為空！</div>
+    </div>
+
+    <!-- 登入後的儀表板區塊 -->
+    <div id="dashboard-container" style="display: none;">
+        <div class="sidebar">
+            <ul class="sidebar-menu">
+                <li class="active" onclick="switchTab('profile')">個人資料</li>
+                <li onclick="switchTab('schedule')">本學期課表</li>
+                <li onclick="switchTab('grades')">歷年成績查詢</li>
+            </ul>
+        </div>
+        
+        <div class="main-content">
+            <!-- 個人資料 -->
+            <div id="profile" class="content-section active">
+                <h2>個人資料</h2>
+                <hr>
+                <p><strong>學號：</strong> <span id="display-id">111210511</span></p>
+                <p><strong>系所：</strong> 資訊工程學系</p>
+                <p><strong>年級：</strong> 四年級</p>
+                <p><strong>學籍狀態：</strong> 在學</p>
+            </div>
+
+            <!-- 課表 -->
+            <div id="schedule" class="content-section">
+                <h2>本學期課表</h2>
+                <hr>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>節次 / 星期</th>
+                            <th>星期一</th>
+                            <th>星期二</th>
+                            <th>星期三</th>
+                            <th>星期四</th>
+                            <th>星期五</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>第 1 節<br>08:10-09:00</td>
+                            <td></td>
+                            <td>現代軟體工程</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>第 2 節<br>09:10-10:00</td>
+                            <td></td>
+                            <td>現代軟體工程</td>
+                            <td>資料庫系統</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>第 3 節<br>10:10-11:00</td>
+                            <td>網頁程式設計</td>
+                            <td>現代軟體工程</td>
+                            <td>資料庫系統</td>
+                            <td>人工智慧</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>第 4 節<br>11:10-12:00</td>
+                            <td>網頁程式設計</td>
+                            <td></td>
+                            <td>資料庫系統</td>
+                            <td>人工智慧</td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 成績 -->
+            <div id="grades" class="content-section">
+                <h2>歷年成績查詢</h2>
+                <hr>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>學期</th>
+                            <th>課程名稱</th>
+                            <th>學分數</th>
+                            <th>成績</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>111上</td>
+                            <td>計算機概論</td>
+                            <td>3</td>
+                            <td>85</td>
+                        </tr>
+                        <tr>
+                            <td>111下</td>
+                            <td>物件導向程式設計</td>
+                            <td>3</td>
+                            <td>88</td>
+                        </tr>
+                        <tr>
+                            <td>112上</td>
+                            <td>資料結構</td>
+                            <td>3</td>
+                            <td>82</td>
+                        </tr>
+                        <tr>
+                            <td>112下</td>
+                            <td>演算法</td>
+                            <td>3</td>
+                            <td>79</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function login() {
+            const studentId = document.getElementById('studentId').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const errorMsg = document.getElementById('loginError');
+
+            if (studentId === "" || password === "") {
+                errorMsg.style.display = "block";
+                return;
+            }
+
+            errorMsg.style.display = "none";
+            document.getElementById('display-id').textContent = studentId;
+            
+            document.getElementById('login-container').style.display = 'none';
+            document.getElementById('dashboard-container').style.display = 'flex';
+            document.getElementById('logoutBtn').style.display = 'block';
+        }
+
+        function logout() {
+            document.getElementById('studentId').value = '';
+            document.getElementById('password').value = '';
+            
+            document.getElementById('dashboard-container').style.display = 'none';
+            document.getElementById('login-container').style.display = 'block';
+            document.getElementById('logoutBtn').style.display = 'none';
+            
+            switchTab('profile');
+        }
+
+        function switchTab(tabId) {
+            const sections = document.querySelectorAll('.content-section');
+            sections.forEach(section => section.classList.remove('active'));
+            
+            const menuItems = document.querySelectorAll('.sidebar-menu li');
+            menuItems.forEach(item => item.classList.remove('active'));
+
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
