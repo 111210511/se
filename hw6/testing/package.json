@@ -1,1 +1,19 @@
-
+{
+  "name": "web-testing-demo",
+  "version": "1.0.0",
+  "description": "實作三種層級測試的網站應用",
+  "scripts": {
+    "start": "node server.js",
+    "test:unit": "jest tests/unit.test.js",
+    "test:api": "jest tests/api.test.js",
+    "test:e2e": "playwright test tests/e2e.spec.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.32.3",
+    "jest": "^29.5.0",
+    "supertest": "^6.3.3"
+  }
+}
