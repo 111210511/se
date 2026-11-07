@@ -2,76 +2,105 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HW1 - 類 curl 專案</title>
+    <title>Web 版類 curl 工具</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .form-group { margin-bottom: 10px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, textarea, select { width: 100%; max-width: 600px; padding: 8px; box-sizing: border-box; }
+        button { padding: 10px 20px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; }
+        button:hover { background-color: #0056b3; }
+        pre { background: #f4f4f4; padding: 10px; overflow-x: auto; max-width: 800px; border: 1px solid #ccc; min-height: 50px; }
+    </style>
 </head>
 <body>
-    <h1>習題 1：請做一個類似 curl 的專案</h1>
-    <p>以下是使用 Python 撰寫的類 curl 程式碼：</p>
+    <h1>Web 版類 curl 工具</h1>
     
-    <pre><code>
-import argparse
-import urllib.request
-import urllib.parse
-import urllib.error
-import sys
-
-def parse_headers(header_list):
-    headers = {}
-    if header_list:
-        for h in header_list:
-            parts = h.split(':', 1)
-            if len(parts) == 2:
-                headers[parts[0].strip()] = parts[1].strip()
-    return headers
-
-def main():
-    parser = argparse.ArgumentParser(description="簡單的類 curl 命令列工具")
-    parser.add_argument("url", help="要請求的 URL")
-    parser.add_argument("-X", "--request", help="指定使用的請求方法 (例如 GET, POST, PUT, DELETE)", default=None)
-    parser.add_argument("-d", "--data", help="HTTP POST 的資料", default=None)
-    parser.add_argument("-H", "--header", help="傳遞自訂標頭給伺服器", action="append")
-    parser.add_argument("-o", "--output", help="將輸出寫入檔案而非終端機", default=None)
+    <div class="form-group">
+        <label>URL (必填):</label>
+        <input type="text" id="urlInput" value="https://jsonplaceholder.typicode.com/todos/1" placeholder="請輸入完整網址，包含 http 或 https">
+    </div>
     
-    args = parser.parse_args()
-
-    method = args.request
-    if args.data is not None and method is None:
-        method = "POST"
-    elif method is None:
-        method = "GET"
-
-    headers = parse_headers(args.header)
+    <div class="form-group">
+        <label>HTTP 請求方法 (Method):</label>
+        <select id="methodInput">
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+            <option value="PUT">PUT</option>
+            <option value="DELETE">DELETE</option>
+        </select>
+    </div>
     
-    data = None
-    if args.data is not None:
-        data = args.data.encode('utf-8')
+    <div class="form-group">
+        <label>Headers (JSON 格式, 選填):</label>
+        <textarea id="headersInput" rows="3" placeholder='例如: {"Content-Type": "application/json"}'></textarea>
+    </div>
+    
+    <div class="form-group">
+        <label>Data (POST / PUT 夾帶資料使用, 選填):</label>
+        <textarea id="dataInput" rows="3" placeholder="請輸入要傳送的資料內容"></textarea>
+    </div>
+    
+    <button onclick="sendRequest()">發送請求</button>
 
-    req = urllib.request.Request(args.url, data=data, headers=headers, method=method)
+    <h2>伺服器回應:</h2>
+    <p id="statusOutput"></p>
+    <pre id="responseOutput">等待請求中...</pre>
 
-    try:
-        with urllib.request.urlopen(req) as response:
-            body = response.read()
+    <script>
+        async function sendRequest() {
+            const url = document.getElementById('urlInput').value.trim();
+            const method = document.getElementById('methodInput').value;
+            const headersStr = document.getElementById('headersInput').value.trim();
+            const dataStr = document.getElementById('dataInput').value;
             
-            if args.output:
-                with open(args.output, 'wb') as f:
-                    f.write(body)
-                print(f"已下載 {len(body)} 位元組至 {args.output}")
-            else:
-                try:
-                    print(body.decode('utf-8'))
-                except UnicodeDecodeError:
-                    sys.stdout.buffer.write(body)
-                    
-    except urllib.error.URLError as e:
-        print(f"請求發生錯誤: {e}")
-        sys.exit(1)
-    except Exception as e:
-        print(f"發生未預期的錯誤: {e}")
-        sys.exit(1)
+            const responseOutput = document.getElementById('responseOutput');
+            const statusOutput = document.getElementById('statusOutput');
+            
+            if (!url) {
+                responseOutput.textContent = "請輸入 URL";
+                statusOutput.textContent = "";
+                return;
+            }
 
-if __name__ == "__main__":
-    main()
-    </code></pre>
+            responseOutput.textContent = "載入中，請稍候...";
+            statusOutput.textContent = "";
+
+            let options = {
+                method: method,
+                headers: {}
+            };
+
+            if (headersStr) {
+                try {
+                    options.headers = JSON.parse(headersStr);
+                } catch (e) {
+                    responseOutput.textContent = "Headers 格式錯誤，請確認輸入的是合法的 JSON 格式。";
+                    return;
+                }
+            }
+
+            if ((method === 'POST' || method === 'PUT') && dataStr) {
+                options.body = dataStr;
+            }
+
+            try {
+                const response = await fetch(url, options);
+                statusOutput.textContent = "HTTP 狀態碼: " + response.status;
+                
+                const text = await response.text();
+                
+                try {
+                    const json = JSON.parse(text);
+                    responseOutput.textContent = JSON.stringify(json, null, 2);
+                } catch (e) {
+                    responseOutput.textContent = text;
+                }
+            } catch (error) {
+                statusOutput.textContent = "請求失敗";
+                responseOutput.textContent = "錯誤訊息: " + error.message + "\n\n注意事項：網頁版發送請求會受到瀏覽器的 CORS (跨來源資源共用) 安全限制。如果你請求的網站不允許跨域讀取，瀏覽器會強制阻擋此請求。";
+            }
+        }
+    </script>
 </body>
 </html>
